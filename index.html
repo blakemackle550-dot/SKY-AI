@@ -111,7 +111,7 @@ Rules:
 const FILE_RE = /\[FILE:\s*([^\]\n]+)\]\n?([\s\S]*?)\n?\[END FILE\]/g;
 
 let sample = null, downloads = null, busy = false, ctl = null, apiKey = '';
-const sessions = [];
+const sessions = [];   // chats that have at least one message, newest first
 let current = newSession();
 
 function newSession() {
@@ -252,6 +252,7 @@ function renderView(v, raw, final, finalLabel) {
   $('log').scrollTop = $('log').scrollHeight;
 }
 
+// Shows one saved message of a chat again.
 function replay(it) {
   if (it.role === 'user' || it.ui) addMsg(it.role, it.raw);
   else renderView(makeView(), it.raw, true);
@@ -296,6 +297,7 @@ async function send(text) {
   addMsg('user', text);
   renderSide();
 
+  // The request uses only real messages (not the greeting), kept under the size limit.
   const hist = s.items.filter(i => !i.ui).map(i => ({role: i.role, content: i.raw}));
   while (hist.reduce((n, m) => n + m.content.length, 0) > 200000 && hist.length > 2) hist.splice(0, 2);
   const input = hist.map((m, i) => ({
@@ -347,7 +349,7 @@ $('keyBtn').addEventListener('click', () => {
   setBusy(false);
 });
 
-// Calls DeepSeek directly from the browser with the visitor's key and streams the answer.
+// Calls Claude directly from the browser with the visitor's key and streams the answer.
 async function callClaude(messages, signal, onText) {
   const res = await fetch('https://api.deepseek.com/chat/completions', {
     method: 'POST',
